@@ -1,0 +1,14 @@
+{
+    "name": "sistema-ventas/backend",
+    "description": "Backend para Sistema de Ventas",
+    "type": "project",
+    "require": {
+        "dompdf/dompdf": "2.0"
+    },
+    "authors": [
+        {
+            "name": "Antigravity",
+            "email": "antigravity@example.com"
+        }
+    ]
+}
