@@ -5,13 +5,13 @@ $active_group = 'default';
 $query_builder = TRUE;
 
 $db['default'] = array(
-    'dsn'          => '',
+   'dsn'          => '',
     'hostname'     => 'localhost',
-    'username'     => 'root',
-    'password'     => '',
-    'database'     => 'sistema_ventas',
+    'username'     => 'vanguard_admin',
+    'password'     => 'Ariana.2107',
+    'database'     => 'vanguard_sistema_ventas',
     'dbdriver'     => 'mysqli',
-    'dbprefix'     => DB_PREFIX,
+    'dbprefix'     => '',
     'pconnect'     => FALSE,
     'db_debug'     => (ENVIRONMENT !== 'production'),
     'cache_on'     => FALSE,
