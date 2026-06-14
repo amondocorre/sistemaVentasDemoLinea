@@ -8,7 +8,8 @@ date_default_timezone_set('America/La_Paz');
 
 // Definir el entorno
 define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development');
-define('DB_PREFIX', 'svf_');
+// El prefijo DB_PREFIX se define ahora en application/config/constants.php
+
 
 // Configurar errores según el entorno
 switch (ENVIRONMENT) {
