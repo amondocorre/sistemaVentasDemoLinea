@@ -1,11 +1,15 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+if (!defined('DB_PREFIX')) {
+    define('DB_PREFIX', 'svf_');
+}
+
 $active_group = 'default';
 $query_builder = TRUE;
 
 $db['default'] = array(
-   'dsn'          => '',
+    'dsn'          => '',
     'hostname'     => 'localhost',
     'username'     => 'vanguard_admin',
     'password'     => 'Ariana.2107',

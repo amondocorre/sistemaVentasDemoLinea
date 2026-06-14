@@ -1,9 +1,12 @@
-<IfModule mod_rewrite.c>
-  RewriteEngine On
+RewriteEngine On
 
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^ - [L]
+# Asegurar que el header Authorization (Bearer ...) llegue a PHP
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-  RewriteRule . index.html [L]
-</IfModule>
+# Remove index.php from URL (todas las peticiones, incluyendo OPTIONS, pasan por index.php)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php/$1 [L]
+
+# Las cabeceras CORS se manejan en el hook CorsHook de CodeIgniter
