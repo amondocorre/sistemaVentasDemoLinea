@@ -285,4 +285,27 @@ class Auth extends Public_Controller
             'message' => 'Contraseña actualizada exitosamente'
         ));
     }
+
+    /**
+     * GET /api/auth/config
+     * Obtiene configuración pública de la empresa (nombre y logo)
+     */
+    public function public_config()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            $this->response(array('success' => false, 'message' => 'Método no permitido'), 405);
+        }
+
+        $this->load->model('Configuracion_model');
+        $configs = $this->Configuracion_model->get_all();
+
+        $this->response(array(
+            'success' => true,
+            'data' => array(
+                'nombre_empresa' => isset($configs['nombre_empresa']) ? $configs['nombre_empresa'] : 'Sistema Ventas',
+                'logo_empresa' => isset($configs['logo_empresa']) ? $configs['logo_empresa'] : null
+            )
+        ));
+    }
 }
+

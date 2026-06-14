@@ -32,6 +32,8 @@ $route['api/auth/refresh']['POST'] = 'api/Auth/refresh';
 $route['api/auth/logout']['POST'] = 'api/Auth/logout';
 $route['api/auth/me']['GET'] = 'api/Auth/me';
 $route['api/auth/change-password']['POST'] = 'api/Auth/change_password';
+$route['api/auth/config']['GET'] = 'api/Auth/public_config';
+
 
 /*
 |--------------------------------------------------------------------------
@@ -214,6 +216,8 @@ $route['api/reportes/metodos-pago/excel']['GET'] = 'api/Reportes/metodos_pago_ex
 */
 $route['api/configuracion']['GET'] = 'api/Configuracion/index';
 $route['api/configuracion']['POST'] = 'api/Configuracion/update';
+$route['api/configuracion/logo']['POST'] = 'api/Configuracion/upload_logo';
+
 
 // API Routes - Proveedores
 $route['api/proveedores']['GET'] = 'api/Proveedores/index';
