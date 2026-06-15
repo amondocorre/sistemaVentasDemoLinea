@@ -28,8 +28,13 @@ class Ventas extends MY_Controller
             $this->response(array('success' => false, 'message' => 'No autorizado'), 403);
         }
         
+        $id_sucursal = $this->is_admin() ? $this->input->get('id_sucursal') : $this->user['id_sucursal'];
+        if ($id_sucursal === null || $id_sucursal === '') {
+            $id_sucursal = $this->user['id_sucursal'];
+        }
+
         $filters = array(
-            'id_sucursal' => $this->is_admin() ? $this->input->get('id_sucursal') : $this->user['id_sucursal'],
+            'id_sucursal' => $id_sucursal,
             'id_usuario' => $this->input->get('id_usuario'),
             'estado' => $this->input->get('estado'),
             'fecha_inicio' => $this->input->get('fecha_inicio'),

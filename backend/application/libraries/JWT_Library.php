@@ -60,10 +60,7 @@ class JWT_Library
         return $this->encode($payload);
     }
 
-    /**
-     * Genera un refresh token
-     */
-    public function generate_refresh_token($user_id)
+    public function generate_refresh_token($user_id, $id_sucursal = null)
     {
         $issued_at = time();
         $expire = $issued_at + $this->refresh_expire;
@@ -75,6 +72,7 @@ class JWT_Library
             'exp' => $expire,
             'type' => 'refresh',
             'user_id' => $user_id,
+            'id_sucursal' => $id_sucursal,
             'jti' => bin2hex(random_bytes(16))
         );
 
@@ -156,7 +154,12 @@ class JWT_Library
             return array('success' => false, 'message' => 'Tipo de token inválido');
         }
 
-        return array('success' => true, 'user_id' => $result['data']['user_id'], 'jti' => $result['data']['jti']);
+        return array(
+            'success' => true,
+            'user_id' => $result['data']['user_id'],
+            'id_sucursal' => isset($result['data']['id_sucursal']) ? $result['data']['id_sucursal'] : null,
+            'jti' => $result['data']['jti']
+        );
     }
 
     /**

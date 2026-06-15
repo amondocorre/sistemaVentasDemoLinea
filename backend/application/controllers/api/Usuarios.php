@@ -110,7 +110,7 @@ class Usuarios extends MY_Controller
             'email' => $input['email'],
             'password' => $input['password'],
             'id_rol' => $input['id_rol'],
-            'id_sucursal' => isset($input['id_sucursal']) ? $input['id_sucursal'] : null,
+            'id_sucursales' => isset($input['id_sucursales']) ? $input['id_sucursales'] : (isset($input['id_sucursal']) && $input['id_sucursal'] ? array($input['id_sucursal']) : array()),
             'telefono' => isset($input['telefono']) ? $input['telefono'] : null,
             'estado' => isset($input['estado']) ? $input['estado'] : 1
         );
@@ -167,7 +167,7 @@ class Usuarios extends MY_Controller
         }
         
         $data = array();
-        $campos = array('nombre', 'usuario', 'email', 'password', 'id_rol', 'id_sucursal', 'telefono', 'estado');
+        $campos = array('nombre', 'usuario', 'email', 'password', 'id_rol', 'id_sucursal', 'id_sucursales', 'telefono', 'estado');
         
         foreach ($campos as $campo) {
             if (isset($input[$campo])) {

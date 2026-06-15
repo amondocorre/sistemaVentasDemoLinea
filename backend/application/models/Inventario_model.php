@@ -368,6 +368,44 @@ class Inventario_model extends CI_Model
     }
 
     /**
+     * Obtiene resumen de inventario por sucursal
+     */
+    public function get_resumen_sucursal($id_sucursal)
+    {
+        $this->db->select('COUNT(DISTINCT i.id_producto) as total_productos, SUM(i.stock) as total_stock');
+        $this->db->from($this->table . ' i');
+        $this->db->join('productos p', 'p.id = i.id_producto');
+        $this->db->where('p.estado', 1);
+        $this->db->where('i.id_sucursal', $id_sucursal);
+        
+        $resumen = $this->db->get()->row_array();
+        
+        // Productos con stock crítico en esta sucursal
+        $this->db->select('COUNT(*) as stock_critico');
+        $this->db->from($this->table . ' i');
+        $this->db->join('productos p', 'p.id = i.id_producto');
+        $this->db->where('p.estado', 1);
+        $this->db->where('i.id_sucursal', $id_sucursal);
+        $this->db->where('i.stock <=', 'p.stock_minimo', FALSE);
+        
+        $critico = $this->db->get()->row();
+        $resumen['stock_critico'] = $critico->stock_critico;
+        
+        // Valor del inventario en esta sucursal
+        $this->db->select('SUM(i.stock * p.precio_compra) as valor_costo, SUM(i.stock * p.precio_venta) as valor_venta');
+        $this->db->from($this->table . ' i');
+        $this->db->join('productos p', 'p.id = i.id_producto');
+        $this->db->where('p.estado', 1);
+        $this->db->where('i.id_sucursal', $id_sucursal);
+        
+        $valor = $this->db->get()->row_array();
+        $resumen['valor_costo'] = $valor['valor_costo'] ?: 0;
+        $resumen['valor_venta'] = $valor['valor_venta'] ?: 0;
+        
+        return $resumen;
+    }
+
+    /**
      * Obtiene productos con stock crítico
      */
     public function get_stock_critico($id_sucursal = null, $limit = 20)

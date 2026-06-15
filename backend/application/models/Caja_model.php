@@ -20,6 +20,18 @@ class Caja_model extends CI_Model
         return $this->db->get($this->table)->row_array();
     }
 
+    public function get_turno_abierto_sucursal($id_sucursal)
+    {
+        $this->db->select('t.*, u.nombre as usuario_nombre');
+        $this->db->from($this->table . ' t');
+        $this->db->join('usuarios u', 'u.id = t.id_usuario', 'left');
+        $this->db->where('t.id_sucursal', (int)$id_sucursal);
+        $this->db->where('t.estado', 'abierto');
+        $this->db->order_by('t.id', 'DESC');
+        $this->db->limit(1);
+        return $this->db->get()->row_array();
+    }
+
     public function abrir_turno($id_usuario, $id_sucursal, $monto_inicial)
     {
         $data = array(

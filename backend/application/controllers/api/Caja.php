@@ -79,10 +79,17 @@ class Caja extends MY_Controller
         }
 
         $turno = $this->Caja_model->get_turno_abierto($this->user['id'], $this->user['id_sucursal']);
+        
+        // Comprobar si existe otro turno abierto por cualquier otro usuario en la misma sucursal
+        $otro_turno = null;
+        if (!$turno) {
+            $otro_turno = $this->Caja_model->get_turno_abierto_sucursal($this->user['id_sucursal']);
+        }
 
         $this->response(array(
             'success' => true,
-            'data' => $turno
+            'data' => $turno,
+            'otro_turno' => $otro_turno
         ));
     }
 
@@ -107,11 +114,13 @@ class Caja extends MY_Controller
             ), 400);
         }
 
-        $turno_abierto = $this->Caja_model->get_turno_abierto($this->user['id'], $this->user['id_sucursal']);
-        if ($turno_abierto) {
+        // Verificar si la sucursal ya tiene un turno abierto por cualquier usuario
+        $turno_abierto_sucursal = $this->Caja_model->get_turno_abierto_sucursal($this->user['id_sucursal']);
+        if ($turno_abierto_sucursal) {
+            $usuario_str = isset($turno_abierto_sucursal['usuario_nombre']) ? ' por ' . $turno_abierto_sucursal['usuario_nombre'] : '';
             $this->response(array(
                 'success' => false,
-                'message' => 'Ya existe un turno abierto'
+                'message' => 'Ya existe un turno abierto en esta sucursal' . $usuario_str
             ), 400);
         }
 

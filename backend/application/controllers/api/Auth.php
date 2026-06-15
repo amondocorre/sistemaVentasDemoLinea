@@ -47,9 +47,57 @@ class Auth extends Public_Controller
             ), 401);
         }
 
+        // Obtener sucursales asignadas
+        $sucursales = isset($user['sucursales']) ? $user['sucursales'] : array();
+        
+        if (empty($sucursales)) {
+            $this->response(array(
+                'success' => false,
+                'message' => 'El usuario no tiene sucursales asignadas'
+            ), 403);
+        }
+
+        $selected_branch = null;
+        
+        // Si hay una sucursal seleccionada en el input
+        if (isset($input['id_sucursal']) && $input['id_sucursal'] !== '') {
+            $id_sucursal_input = (int)$input['id_sucursal'];
+            foreach ($sucursales as $s) {
+                if ((int)$s['id'] === $id_sucursal_input) {
+                    $selected_branch = $s;
+                    break;
+                }
+            }
+            if (!$selected_branch) {
+                $this->response(array(
+                    'success' => false,
+                    'message' => 'Sucursal seleccionada no válida para este usuario'
+                ), 400);
+            }
+        } else {
+            // Si el usuario tiene más de una sucursal y no ha elegido
+            if (count($sucursales) > 1) {
+                $this->response(array(
+                    'success' => true,
+                    'require_branch_selection' => true,
+                    'message' => 'Seleccione una sucursal',
+                    'data' => array(
+                        'sucursales' => $sucursales
+                    )
+                ));
+            } else {
+                // Si solo tiene una sucursal, se asigna automáticamente
+                $selected_branch = $sucursales[0];
+            }
+        }
+
+        // Establecer la sucursal activa para el token y la sesión
+        $user['id_sucursal'] = $selected_branch['id'];
+        $user['sucursal'] = $selected_branch['nombre'];
+
         // Generar tokens
         $access_token = $this->jwt->generate_access_token($user);
-        $refresh_token = $this->jwt->generate_refresh_token($user['id']);
+        $refresh_token = $this->jwt->generate_refresh_token($user['id'], $user['id_sucursal']);
         
         // Guardar refresh token en BD
         $this->Usuario_model->save_refresh_token(
@@ -129,11 +177,24 @@ class Auth extends Public_Controller
             ), 401);
         }
 
+        // Sobrescribir la sucursal en el usuario con la que viene del refresh token
+        if (!empty($result['id_sucursal'])) {
+            $user['id_sucursal'] = $result['id_sucursal'];
+            if (!empty($user['sucursales'])) {
+                foreach ($user['sucursales'] as $s) {
+                    if ($s['id'] == $result['id_sucursal']) {
+                        $user['sucursal'] = $s['nombre'];
+                        break;
+                    }
+                }
+            }
+        }
+
         // Generar nuevo access token
         $access_token = $this->jwt->generate_access_token($user);
         
         // Generar nuevo refresh token
-        $new_refresh_token = $this->jwt->generate_refresh_token($user['id']);
+        $new_refresh_token = $this->jwt->generate_refresh_token($user['id'], $user['id_sucursal']);
         
         // Actualizar refresh token en BD
         $this->Usuario_model->save_refresh_token(
@@ -154,6 +215,91 @@ class Auth extends Public_Controller
             )
         ));
     }
+
+    /**
+     * POST /api/auth/switch-branch
+     * Cambia la sucursal activa y retorna nuevos tokens
+     */
+    public function switch_branch()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->response(array('success' => false, 'message' => 'Método no permitido'), 405);
+        }
+
+        // Autenticar manualmente para este endpoint
+        $token = $this->get_bearer_token();
+        if (!$token) {
+            $this->response(array('success' => false, 'message' => 'Token requerido'), 401);
+        }
+
+        $result = $this->jwt->validate_access_token($token);
+        if (!$result['success']) {
+            $this->response(array('success' => false, 'message' => $result['message']), 401);
+        }
+
+        $input = $this->get_json_input();
+        if (empty($input['id_sucursal'])) {
+            $this->response(array('success' => false, 'message' => 'Sucursal requerida'), 400);
+        }
+
+        $id_sucursal = (int)$input['id_sucursal'];
+
+        // Obtener datos del usuario
+        $user = $this->Usuario_model->get_by_id($result['user']['id']);
+        if (!$user || $user['estado'] != 1) {
+            $this->response(array('success' => false, 'message' => 'Usuario no encontrado o inactivo'), 401);
+        }
+
+        // Verificar que la sucursal solicitada esté asignada a este usuario
+        $valid = false;
+        $selected_branch = null;
+        if (!empty($user['sucursales'])) {
+            foreach ($user['sucursales'] as $s) {
+                if ((int)$s['id'] === $id_sucursal) {
+                    $valid = true;
+                    $selected_branch = $s;
+                    break;
+                }
+            }
+        }
+
+        if (!$valid) {
+            $this->response(array('success' => false, 'message' => 'Sucursal no válida para este usuario'), 403);
+        }
+
+        // Establecer la sucursal activa para el token y la sesión
+        $user['id_sucursal'] = $selected_branch['id'];
+        $user['sucursal'] = $selected_branch['nombre'];
+
+        // Generar nuevos tokens
+        $access_token = $this->jwt->generate_access_token($user);
+        $refresh_token = $this->jwt->generate_refresh_token($user['id'], $user['id_sucursal']);
+
+        // Guardar refresh token en BD
+        $this->Usuario_model->save_refresh_token(
+            $user['id'],
+            $refresh_token,
+            $this->jwt->get_refresh_expire_time()
+        );
+
+        // Limpiar datos sensibles
+        unset($user['password']);
+        unset($user['refresh_token']);
+        unset($user['refresh_token_expires']);
+
+        $this->response(array(
+            'success' => true,
+            'message' => 'Sucursal cambiada exitosamente',
+            'data' => array(
+                'user' => $user,
+                'access_token' => $access_token,
+                'refresh_token' => $refresh_token,
+                'token_type' => 'Bearer',
+                'expires_in' => (int) $this->config->item('jwt_access_token_expire')
+            )
+        ));
+    }
+
 
     /**
      * POST /api/auth/logout
@@ -220,6 +366,19 @@ class Auth extends Public_Controller
                 'success' => false,
                 'message' => 'Usuario no encontrado'
             ), 404);
+        }
+
+        // Sobrescribir la sucursal activa en el usuario con la que viene del token JWT
+        if (!empty($result['user']['id_sucursal'])) {
+            $user['id_sucursal'] = $result['user']['id_sucursal'];
+            if (!empty($user['sucursales'])) {
+                foreach ($user['sucursales'] as $s) {
+                    if ($s['id'] == $result['user']['id_sucursal']) {
+                        $user['sucursal'] = $s['nombre'];
+                        break;
+                    }
+                }
+            }
         }
 
         // Limpiar datos sensibles

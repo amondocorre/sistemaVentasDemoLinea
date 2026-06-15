@@ -33,6 +33,7 @@ $route['api/auth/logout']['POST'] = 'api/Auth/logout';
 $route['api/auth/me']['GET'] = 'api/Auth/me';
 $route['api/auth/change-password']['POST'] = 'api/Auth/change_password';
 $route['api/auth/config']['GET'] = 'api/Auth/public_config';
+$route['api/auth/switch-branch']['POST'] = 'api/Auth/switch_branch';
 
 
 /*

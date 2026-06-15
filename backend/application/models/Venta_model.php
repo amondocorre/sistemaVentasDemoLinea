@@ -304,7 +304,7 @@ class Venta_model extends CI_Model
     /**
      * Obtiene ventas por sucursal
      */
-    public function get_ventas_por_sucursal($fecha_inicio = null, $fecha_fin = null)
+    public function get_ventas_por_sucursal($fecha_inicio = null, $fecha_fin = null, $id_sucursal = null)
     {
         $this->db->select('s.nombre as sucursal, COUNT(v.id) as cantidad, SUM(v.total) as total');
         $this->db->from($this->table . ' v');
@@ -316,6 +316,9 @@ class Venta_model extends CI_Model
         }
         if ($fecha_fin) {
             $this->db->where('DATE(v.fecha_venta) <=', $fecha_fin);
+        }
+        if ($id_sucursal) {
+            $this->db->where('v.id_sucursal', $id_sucursal);
         }
         
         $this->db->group_by('v.id_sucursal');

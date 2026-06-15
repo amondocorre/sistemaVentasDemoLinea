@@ -30,7 +30,7 @@ class Dashboard extends MY_Controller
         
         switch ($rol) {
             case 'admin':
-                $data = $this->get_dashboard_admin();
+                $data = $this->get_dashboard_admin($id_sucursal);
                 break;
             case 'supervisor':
                 $data = $this->get_dashboard_supervisor($id_sucursal);
@@ -51,18 +51,18 @@ class Dashboard extends MY_Controller
     /**
      * Dashboard completo para Admin
      */
-    protected function get_dashboard_admin()
+    protected function get_dashboard_admin($id_sucursal)
     {
         return array(
-            'ventas_dia' => $this->Venta_model->get_ventas_dia(),
-            'ventas_sucursal' => $this->Venta_model->get_ventas_por_sucursal(date('Y-m-d'), date('Y-m-d')),
-            'top_productos' => $this->Venta_model->get_top_productos(5),
-            'ventas_7_dias' => $this->Venta_model->get_ventas_periodo(7),
-            'ventas_30_dias' => $this->Venta_model->get_ventas_periodo(30),
-            'ingresos_metodo_pago' => $this->Venta_model->get_ingresos_metodo_pago(date('Y-m-01'), date('Y-m-d')),
-            'utilidad' => $this->Venta_model->get_utilidad(date('Y-m-01'), date('Y-m-d')),
-            'inventario' => $this->Inventario_model->get_resumen_global(),
-            'stock_critico' => $this->Inventario_model->get_stock_critico(null, 10)
+            'ventas_dia' => $this->Venta_model->get_ventas_dia($id_sucursal),
+            'ventas_sucursal' => $this->Venta_model->get_ventas_por_sucursal(date('Y-m-d'), date('Y-m-d'), $id_sucursal),
+            'top_productos' => $this->Venta_model->get_top_productos(5, $id_sucursal),
+            'ventas_7_dias' => $this->Venta_model->get_ventas_periodo(7, $id_sucursal),
+            'ventas_30_dias' => $this->Venta_model->get_ventas_periodo(30, $id_sucursal),
+            'ingresos_metodo_pago' => $this->Venta_model->get_ingresos_metodo_pago(date('Y-m-01'), date('Y-m-d'), $id_sucursal),
+            'utilidad' => $this->Venta_model->get_utilidad(date('Y-m-01'), date('Y-m-d'), $id_sucursal),
+            'inventario' => $this->Inventario_model->get_resumen_sucursal($id_sucursal),
+            'stock_critico' => $this->Inventario_model->get_stock_critico($id_sucursal, 10)
         );
     }
 
@@ -111,7 +111,7 @@ class Dashboard extends MY_Controller
      */
     public function ventas_dia()
     {
-        $id_sucursal = $this->is_admin() ? null : $this->user['id_sucursal'];
+        $id_sucursal = $this->user['id_sucursal'];
         
         $this->response(array(
             'success' => true,
@@ -130,10 +130,11 @@ class Dashboard extends MY_Controller
         
         $fecha_inicio = $this->input->get('fecha_inicio') ?: date('Y-m-01');
         $fecha_fin = $this->input->get('fecha_fin') ?: date('Y-m-d');
+        $id_sucursal = $this->user['id_sucursal'];
         
         $this->response(array(
             'success' => true,
-            'data' => $this->Venta_model->get_ventas_por_sucursal($fecha_inicio, $fecha_fin)
+            'data' => $this->Venta_model->get_ventas_por_sucursal($fecha_inicio, $fecha_fin, $id_sucursal)
         ));
     }
 
@@ -143,7 +144,7 @@ class Dashboard extends MY_Controller
     public function top_productos()
     {
         $limit = $this->input->get('limit') ?: 10;
-        $id_sucursal = $this->is_admin() ? $this->input->get('id_sucursal') : $this->user['id_sucursal'];
+        $id_sucursal = $this->user['id_sucursal'];
         
         $this->response(array(
             'success' => true,
@@ -161,7 +162,7 @@ class Dashboard extends MY_Controller
         }
         
         $dias = $this->input->get('dias') ?: 7;
-        $id_sucursal = $this->is_admin() ? $this->input->get('id_sucursal') : $this->user['id_sucursal'];
+        $id_sucursal = $this->user['id_sucursal'];
         
         $this->response(array(
             'success' => true,
@@ -180,10 +181,11 @@ class Dashboard extends MY_Controller
         
         $fecha_inicio = $this->input->get('fecha_inicio') ?: date('Y-m-01');
         $fecha_fin = $this->input->get('fecha_fin') ?: date('Y-m-d');
+        $id_sucursal = $this->user['id_sucursal'];
         
         $this->response(array(
             'success' => true,
-            'data' => $this->Venta_model->get_ingresos_metodo_pago($fecha_inicio, $fecha_fin)
+            'data' => $this->Venta_model->get_ingresos_metodo_pago($fecha_inicio, $fecha_fin, $id_sucursal)
         ));
     }
 
@@ -193,7 +195,7 @@ class Dashboard extends MY_Controller
     public function stock_critico()
     {
         $limit = $this->input->get('limit') ?: 20;
-        $id_sucursal = $this->is_admin() ? $this->input->get('id_sucursal') : $this->user['id_sucursal'];
+        $id_sucursal = $this->user['id_sucursal'];
         
         $this->response(array(
             'success' => true,
@@ -209,10 +211,11 @@ class Dashboard extends MY_Controller
         if (!$this->is_admin()) {
             $this->response(array('success' => false, 'message' => 'No autorizado'), 403);
         }
+        $id_sucursal = $this->user['id_sucursal'];
         
         $this->response(array(
             'success' => true,
-            'data' => $this->Inventario_model->get_resumen_global()
+            'data' => $this->Inventario_model->get_resumen_sucursal($id_sucursal)
         ));
     }
 }

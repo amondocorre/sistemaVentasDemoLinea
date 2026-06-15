@@ -42,6 +42,22 @@ class Usuario_model extends CI_Model
         
         $this->db->order_by('u.nombre', 'ASC');
         
+        $users = $this->db->get()->result_array();
+        foreach ($users as &$user) {
+            $user['sucursales'] = $this->get_usuario_sucursales($user['id']);
+        }
+        return $users;
+    }
+
+    /**
+     * Obtiene las sucursales asociadas a un usuario
+     */
+    public function get_usuario_sucursales($id_usuario)
+    {
+        $this->db->select('s.id, s.nombre, s.direccion');
+        $this->db->from('usuario_sucursales us');
+        $this->db->join('sucursales s', 's.id = us.id_sucursal');
+        $this->db->where('us.id_usuario', $id_usuario);
         return $this->db->get()->result_array();
     }
 
@@ -58,8 +74,11 @@ class Usuario_model extends CI_Model
         
         $user = $this->db->get()->row_array();
         
-        if ($user && $user['permisos']) {
-            $user['permisos'] = json_decode($user['permisos'], true);
+        if ($user) {
+            if ($user['permisos']) {
+                $user['permisos'] = json_decode($user['permisos'], true);
+            }
+            $user['sucursales'] = $this->get_usuario_sucursales($user['id']);
         }
         
         return $user;
@@ -74,11 +93,14 @@ class Usuario_model extends CI_Model
         $this->db->where('u.usuario', $usuario);
 
         $user = $this->db->get()->row_array();
-
-        if ($user && $user['permisos']) {
-            $user['permisos'] = json_decode($user['permisos'], true);
+ 
+        if ($user) {
+            if ($user['permisos']) {
+                $user['permisos'] = json_decode($user['permisos'], true);
+            }
+            $user['sucursales'] = $this->get_usuario_sucursales($user['id']);
         }
-
+ 
         return $user;
     }
 
@@ -95,8 +117,11 @@ class Usuario_model extends CI_Model
         
         $user = $this->db->get()->row_array();
         
-        if ($user && $user['permisos']) {
-            $user['permisos'] = json_decode($user['permisos'], true);
+        if ($user) {
+            if ($user['permisos']) {
+                $user['permisos'] = json_decode($user['permisos'], true);
+            }
+            $user['sucursales'] = $this->get_usuario_sucursales($user['id']);
         }
         
         return $user;
@@ -107,11 +132,29 @@ class Usuario_model extends CI_Model
      */
     public function create($data)
     {
+        $id_sucursales = isset($data['id_sucursales']) ? $data['id_sucursales'] : null;
+        unset($data['id_sucursales']);
+
+        if (is_array($id_sucursales) && !empty($id_sucursales)) {
+            $data['id_sucursal'] = $id_sucursales[0];
+        }
+
         $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
         $data['created_at'] = date('Y-m-d H:i:s');
         
         $this->db->insert($this->table, $data);
-        return $this->db->insert_id();
+        $id_usuario = $this->db->insert_id();
+
+        if (is_array($id_sucursales)) {
+            foreach ($id_sucursales as $id_sucursal) {
+                $this->db->insert('usuario_sucursales', array(
+                    'id_usuario' => $id_usuario,
+                    'id_sucursal' => $id_sucursal
+                ));
+            }
+        }
+
+        return $id_usuario;
     }
 
     /**
@@ -119,6 +162,17 @@ class Usuario_model extends CI_Model
      */
     public function update($id, $data)
     {
+        $id_sucursales = isset($data['id_sucursales']) ? $data['id_sucursales'] : null;
+        unset($data['id_sucursales']);
+
+        if (is_array($id_sucursales)) {
+            if (!empty($id_sucursales)) {
+                $data['id_sucursal'] = $id_sucursales[0];
+            } else {
+                $data['id_sucursal'] = null;
+            }
+        }
+
         if (isset($data['password']) && !empty($data['password'])) {
             $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
         } else {
@@ -128,7 +182,23 @@ class Usuario_model extends CI_Model
         $data['updated_at'] = date('Y-m-d H:i:s');
         
         $this->db->where('id', $id);
-        return $this->db->update($this->table, $data);
+        $result = $this->db->update($this->table, $data);
+
+        if (is_array($id_sucursales)) {
+            // Eliminar relaciones previas
+            $this->db->where('id_usuario', $id);
+            $this->db->delete('usuario_sucursales');
+
+            // Insertar nuevas relaciones
+            foreach ($id_sucursales as $id_sucursal) {
+                $this->db->insert('usuario_sucursales', array(
+                    'id_usuario' => $id,
+                    'id_sucursal' => $id_sucursal
+                ));
+            }
+        }
+
+        return $result;
     }
 
     /**

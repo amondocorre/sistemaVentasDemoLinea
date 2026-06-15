@@ -18,7 +18,10 @@ class Compras extends MY_Controller
         $this->require_permission('compras_ver');
         
         $id_sucursal = $this->is_admin() ? $this->input->get('id_sucursal') : $this->user['id_sucursal'];
-        
+        if ($id_sucursal === null || $id_sucursal === '') {
+            $id_sucursal = $this->user['id_sucursal'];
+        }
+
         $filters = array(
             'estado' => $this->input->get('estado') !== null ? $this->input->get('estado') : 1,
             'id_proveedor' => $this->input->get('id_proveedor'),

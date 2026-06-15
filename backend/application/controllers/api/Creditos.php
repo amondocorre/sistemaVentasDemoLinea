@@ -53,8 +53,13 @@ class Creditos extends MY_Controller
     {
         $this->require_permission('creditos_ver');
 
+        $id_sucursal = $this->is_admin() ? $this->input->get('id_sucursal') : $this->user['id_sucursal'];
+        if ($id_sucursal === null || $id_sucursal === '') {
+            $id_sucursal = $this->user['id_sucursal'];
+        }
+
         $filters = array(
-            'id_sucursal' => $this->is_admin() ? $this->input->get('id_sucursal') : $this->user['id_sucursal'],
+            'id_sucursal' => $id_sucursal,
             'estado_cobro' => $this->input->get('estado_cobro') ?: 'pendiente',
             'id_cliente' => $this->input->get('id_cliente'),
             'fecha_inicio' => $this->input->get('fecha_inicio'),
